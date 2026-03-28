@@ -2,6 +2,11 @@ graph TD
     Waiter --- Client
     Waiter --- Order
     Waiter --- Inventory
+    Waiter --- Check
     Client --- Order
+    Client --- Check
     Order --- Item
     Inventory --- Item
+    Check --- Item
+    Check --- Menu
+    Item --- Menu

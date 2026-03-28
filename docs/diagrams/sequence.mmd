@@ -4,6 +4,8 @@ sequenceDiagram
     participant Order
     participant Inventory
     participant Item
+    participant Check
+    participant Menu
 
     Waiter->>Client: greet()
     Client->>Waiter: greet()
@@ -14,3 +16,7 @@ sequenceDiagram
     Inventory-->>Waiter: available!
     Waiter->>Order: execute_order()
     Waiter-->>Client: confirmed!
+    Client->>Waiter: ask_for_check()
+    Waiter->>Check: calculate_amount(items, menu)
+    Check-->>Waiter: total amount
+    Waiter->>Client: give_check(check)

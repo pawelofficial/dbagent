@@ -5,12 +5,14 @@ classDiagram
         +receive_order(order: Order)
         +greets (client : Client)
         -check_availability(item: Item, inventory: Inventory)
+        +give_check( check: Check )
     }
 
     class Client {
         +String name
         +greets(waiter : Waiter)
         +orders_item(item : Item )
+        +ask_for_check (waiter: Waiter)
     }
 
     class Order {
@@ -18,12 +20,23 @@ classDiagram
         +add_item( item: Item)
     }
 
+    class Check {
+        +List items 
+        +calculate_amount(menu: Menu) float
+    }
+
     class Item {
         +String name
         +bool availability
+        +float price
     }
 
     class Inventory {
         +List items
         +check_availability(item: Item) bool
+    }
+
+    class Menu {
+        +Dict prices
+        +get_price(item: Item) float    # Menu knows its own prices
     }
