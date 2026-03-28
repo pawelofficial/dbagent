@@ -1,0 +1,16 @@
+sequenceDiagram
+    actor Client
+    actor Waiter
+    participant Order
+    participant Inventory
+    participant Item
+
+    Waiter->>Client: greet()
+    Client->>Waiter: greet()
+    Client->>Item: select(pizza)
+    Client->>Order: add_item(item)
+    Client->>Waiter: place_order(order)
+    Waiter->>Inventory: check_availability(item)
+    Inventory-->>Waiter: available!
+    Waiter->>Order: execute_order()
+    Waiter-->>Client: confirmed!

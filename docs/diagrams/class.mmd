@@ -1,0 +1,29 @@
+
+classDiagram 
+    class Waiter {
+        +String name
+        +receive_order(order: Order)
+        +greets (client : Client)
+        -check_availability(item: Item, inventory: Inventory)
+    }
+
+    class Client {
+        +String name
+        +greets(waiter : Waiter)
+        +orders_item(item : Item )
+    }
+
+    class Order {
+        +List items
+        +add_item( item: Item)
+    }
+
+    class Item {
+        +String name
+        +bool availability
+    }
+
+    class Inventory {
+        +List items
+        +check_availability(item: Item) bool
+    }
