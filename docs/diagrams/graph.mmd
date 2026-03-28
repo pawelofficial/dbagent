@@ -1,4 +1,7 @@
 graph TD
-    W[Waiter] --> M[Menu]
-    W[Waiter] --> C[Client]
-    M[Menu] --> W[Waiter]
+    Waiter --- Client
+    Waiter --- Order
+    Waiter --- Inventory
+    Client --- Order
+    Order --- Item
+    Inventory --- Item
