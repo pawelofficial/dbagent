@@ -1,6 +1,8 @@
 """
 Runs the full sequence diagram flow:
 
+  Database is seeded with restaurant data
+  Repositories load Inventory and Menu from DB
   Waiter  greets  Client
   Client  greets  Waiter
   Client  selects Item (pizza)
@@ -14,21 +16,35 @@ Runs the full sequence diagram flow:
   Waiter  gives check to Client
 """
 
-from models import Client, Inventory, Item, Menu, Order, Waiter
+from models import (
+    Client,
+    Database,
+    InventoryRepository,
+    MenuRepository,
+    Order,
+    Waiter,
+)
 
 
 def run() -> None:
-    pizza = Item("pizza", price=12.50, availability=True)
-    pasta = Item("pasta", price=9.00, availability=True)
-    sushi = Item("sushi", price=15.00, availability=False)
+    db = Database(":memory:")
+    db.connect()
+    db.seed()
 
-    inventory = Inventory([pizza, pasta, sushi])
-    menu = Menu({"pizza": 12.50, "pasta": 9.00, "sushi": 15.00})
+    print("=" * 40)
+    print("LOADING FROM DATABASE")
+    inventory_repo = InventoryRepository(db)
+    menu_repo = MenuRepository(db)
+    inventory = inventory_repo.load_inventory()
+    menu = menu_repo.load_menu()
+
+    pizza = next(i for i in inventory.items if i.name == "pizza")
+    pasta = next(i for i in inventory.items if i.name == "pasta")
 
     waiter = Waiter("Mario")
     client = Client("Alice")
 
-    print("=" * 40)
+    print("-" * 40)
     print("GREETINGS")
     waiter.greets(client)
     client.greets(waiter)
@@ -38,11 +54,9 @@ def run() -> None:
     selected = client.orders_item(pizza)
     order = Order()
     order.add_item(selected)
-    
+
     selected = client.orders_item(pasta)
     order.add_item(selected)
-
-
 
     print("-" * 40)
     print("PLACING ORDER")

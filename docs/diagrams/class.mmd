@@ -1,27 +1,26 @@
-
-classDiagram 
+classDiagram
     class Waiter {
         +String name
+        +greet(client: Client)
         +receive_order(order: Order)
-        +greets (client : Client)
         -check_availability(item: Item, inventory: Inventory)
-        +give_check( check: Check )
+        +give_check(check: Check)
     }
 
     class Client {
         +String name
-        +greets(waiter : Waiter)
-        +orders_item(item : Item )
-        +ask_for_check (waiter: Waiter)
+        +greet(waiter: Waiter)
+        +order_item(item: Item)
+        +ask_for_check(waiter: Waiter)
     }
 
     class Order {
         +List items
-        +add_item( item: Item)
+        +add_item(item: Item)
     }
 
     class Check {
-        +List items 
+        +List items
         +calculate_amount(menu: Menu) float
     }
 
@@ -38,5 +37,21 @@ classDiagram
 
     class Menu {
         +Dict prices
-        +get_price(item: Item) float    # Menu knows its own prices
+        +get_price(item: Item) float
+    }
+
+    class Database {
+        +String connection_string
+        +connect()
+        +query(sql: str) List
+    }
+    
+    class MenuRepository {
+        -db: Database
+        +load_menu() Menu
+    }
+    
+    class InventoryRepository {
+        -db: Database
+        +load_inventory() Inventory
     }

@@ -5,5 +5,19 @@ from models.order import Order
 from models.check import Check
 from models.client import Client
 from models.waiter import Waiter
+from models.database import Database
+from models.menu_repository import MenuRepository
+from models.inventory_repository import InventoryRepository
 
-__all__ = ["Item", "Menu", "Inventory", "Order", "Check", "Client", "Waiter"]
+__all__ = [
+    "Item",
+    "Menu",
+    "Inventory",
+    "Order",
+    "Check",
+    "Client",
+    "Waiter",
+    "Database",
+    "MenuRepository",
+    "InventoryRepository",
+]
