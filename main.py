@@ -5,11 +5,8 @@ Runs the full sequence diagram flow:
   Repositories load Inventory and Menu from DB
   Waiter  greets  Client
   Client  greets  Waiter
-  Client  selects Item (pizza)
-  Client  adds item to Order
+  Client  selects Item → Waiter checks availability → added to Order
   Client  places order with Waiter
-  Waiter  checks availability via Inventory
-  Waiter  executes order
   Waiter  confirms to Client
   Client  asks for check
   Waiter  calculates check via Menu
@@ -51,24 +48,18 @@ def run() -> None:
 
     print("-" * 40)
     print("ORDERING")
-    selected = client.orders_item(pizza)
     order = Order()
-    order.add_item(selected)
+
+    selected = client.orders_item(pizza)
+    waiter.check_and_add(selected, order, inventory)
 
     selected = client.orders_item(pasta)
-    order.add_item(selected)
+    waiter.check_and_add(selected, order, inventory)
 
     print("-" * 40)
     print("PLACING ORDER")
     client.place_order(order, waiter)
-
-    print("-" * 40)
-    print("CHECKING AVAILABILITY & EXECUTING")
-    confirmed = waiter.execute_order(order, inventory)
-
-    print("-" * 40)
-    print("CONFIRMATION")
-    waiter.confirm(client, confirmed)
+    waiter.confirm(client)
 
     print("-" * 40)
     print("CHECK & PAYMENT")

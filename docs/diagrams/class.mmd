@@ -15,12 +15,12 @@ classDiagram
     }
 
     class Order {
-        +List items
+        +List~Item~ items
         +add_item(item: Item)
     }
 
     class Check {
-        +List items
+        +List~Item~ items
         +calculate_amount(menu: Menu) float
     }
 
@@ -31,7 +31,7 @@ classDiagram
     }
 
     class Inventory {
-        +List items
+        +List~Item~ items
         +check_availability(item: Item) bool
     }
 
@@ -45,13 +45,35 @@ classDiagram
         +connect()
         +query(sql: str) List
     }
-    
+
     class MenuRepository {
         -db: Database
         +load_menu() Menu
     }
-    
+
     class InventoryRepository {
         -db: Database
         +load_inventory() Inventory
     }
+
+    %% Aggregation - holds a collection as a field
+    Order o-- Item : contains
+    Inventory o-- Item : stocks
+    Check o-- Item : lists
+
+    %% Association - uses in method params, doesn't hold
+    Waiter --> Client : serves
+    Client --> Order : places
+    Waiter --> Order : receives
+    Waiter --> Inventory : checks stock
+    Waiter --> Check : requests
+    Menu --> Item : looks up price
+
+    %% Composition - owns as a field, tightly coupled
+    MenuRepository *-- Database : has db
+    InventoryRepository *-- Database : has db
+
+    %% Dependencies - only used as return types in methods
+    MenuRepository ..> Menu : produces
+    InventoryRepository ..> Inventory : produces
+    Check ..> Menu : uses for pricing

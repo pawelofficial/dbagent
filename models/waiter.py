@@ -29,19 +29,15 @@ class Waiter:
         print(f"  {self.name}: {item.name} is {status}.")
         return available
 
-    def execute_order(self, order: Order, inventory: Inventory) -> bool:
-        for item in order.items:
-            if not self._check_availability(item, inventory):
-                print(f"  {self.name}: Sorry, {item.name} is unavailable.")
-                return False
-        print(f"  {self.name}: Order is being prepared!")
+    def check_and_add(self, item: Item, order: Order, inventory: Inventory) -> bool:
+        if not self._check_availability(item, inventory):
+            print(f"  {self.name}: Sorry, {item.name} is unavailable.")
+            return False
+        order.add_item(item)
         return True
 
-    def confirm(self, client: Client, success: bool) -> None:
-        if success:
-            print(f"  {self.name}: {client.name}, your order is confirmed!")
-        else:
-            print(f"  {self.name}: {client.name}, we had an issue with your order.")
+    def confirm(self, client: Client) -> None:
+        print(f"  {self.name}: {client.name}, your order is confirmed!")
 
     def give_check(self, client: Client, check: Check) -> None:
         print(f"  {self.name}: Here is your check, {client.name}.")

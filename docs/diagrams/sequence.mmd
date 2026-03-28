@@ -1,4 +1,7 @@
 sequenceDiagram
+    participant Database
+    participant InventoryRepository
+    participant MenuRepository
     actor Client
     actor Waiter
     participant Order
@@ -7,15 +10,31 @@ sequenceDiagram
     participant Check
     participant Menu
 
+    Database->>Database: connect()
+    Database->>Database: seed()
+    InventoryRepository->>Database: query(items)
+    Database-->>InventoryRepository: rows
+    InventoryRepository-->>Inventory: load_inventory()
+    MenuRepository->>Database: query(menu)
+    Database-->>MenuRepository: rows
+    MenuRepository-->>Menu: load_menu()
+
     Waiter->>Client: greet()
     Client->>Waiter: greet()
+
     Client->>Item: select(pizza)
-    Client->>Order: add_item(item)
-    Client->>Waiter: place_order(order)
-    Waiter->>Inventory: check_availability(item)
+    Waiter->>Inventory: check_availability(pizza)
     Inventory-->>Waiter: available!
-    Waiter->>Order: execute_order()
+    Client->>Order: add_item(pizza)
+
+    Client->>Item: select(pasta)
+    Waiter->>Inventory: check_availability(pasta)
+    Inventory-->>Waiter: available!
+    Client->>Order: add_item(pasta)
+
+    Client->>Waiter: place_order(order)
     Waiter-->>Client: confirmed!
+
     Client->>Waiter: ask_for_check()
     Waiter->>Check: calculate_amount(items, menu)
     Check-->>Waiter: total amount
