@@ -1,0 +1,10 @@
+sequenceDiagram
+    actor Waiter
+    actor Client
+    participant Menu
+
+    Waiter->>Client: What would you like?
+    Client->>Waiter: Pizza please
+    Waiter->>Menu: Check if pizza available
+    Menu-->>Waiter: Yes available
+    Waiter->>Client: One pizza coming up!
