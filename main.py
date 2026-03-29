@@ -64,7 +64,7 @@ def run() -> None:
     print("-" * 40)
     print("CHECK & PAYMENT")
     client.ask_for_check(waiter)
-    check = waiter.prepare_check(order, menu)
+    check = waiter.prepare_check(order, menu, db=db)
     waiter.give_check(client, check)
     print("=" * 40)
 

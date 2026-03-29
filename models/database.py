@@ -39,6 +39,13 @@ class Database:
             "  price REAL NOT NULL"
             ")"
         )
+        self.execute(
+            "CREATE TABLE IF NOT EXISTS checks ("
+            "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "  items TEXT NOT NULL,"
+            "  total REAL NOT NULL"
+            ")"
+        )
         sample_items = [
             ("pizza", 12.50, 1),
             ("pasta", 9.00, 1),

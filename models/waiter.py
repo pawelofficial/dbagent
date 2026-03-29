@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from models.check import Check
     from models.client import Client
+    from models.database import Database
     from models.inventory import Inventory
     from models.item import Item
     from models.menu import Menu
@@ -42,8 +43,10 @@ class Waiter:
     def give_check(self, client: Client, check: Check) -> None:
         print(f"  {self.name}: Here is your check, {client.name}.")
 
-    def prepare_check(self, order: Order, menu: Menu) -> Check:
+    def prepare_check(self, order: Order, menu: Menu, db: Database | None = None) -> Check:
         from models.check import Check
         check = Check(order.items)
         check.calculate_amount(menu)
+        if db is not None:
+            check.save(db)
         return check
