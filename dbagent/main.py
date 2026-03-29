@@ -17,17 +17,14 @@ from dbagent.config import (
     CHAT_DB_PATH, DB_PATH, HOST, PORT,
 )
 from dbagent.chat_store import ChatStore
+from dbagent.db import DB
 
 app = FastAPI(title="DBAgent", version="0.1.0")
 
 FRONTEND_DIR = Path(__file__).parent / "frontend"
 
-
-# ------------------------------------------------------------------
-# Chat persistence
-# ------------------------------------------------------------------
-
 _store = ChatStore(CHAT_DB_PATH)
+_db = DB(db_path=DB_PATH)
 
 
 # ------------------------------------------------------------------
@@ -136,7 +133,7 @@ async def query(req: QueryRequest, username: str = Depends(_require_auth)) -> Qu
 
 @app.get("/api/schema")
 async def schema(username: str = Depends(_require_auth)) -> JSONResponse:
-    raise NotImplementedError
+    return JSONResponse(_db.get_schema())
 
 
 # ------------------------------------------------------------------
@@ -194,6 +191,7 @@ async def ws_query(ws: WebSocket) -> None:
 @app.on_event("shutdown")
 async def shutdown() -> None:
     _store.close()
+    _db.close()
 
 
 # ------------------------------------------------------------------
