@@ -4,10 +4,8 @@ import hashlib
 import hmac
 import json
 import time
-import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
@@ -16,8 +14,9 @@ from pydantic import BaseModel
 
 from dbagent.config import (
     AUTH_USERNAME, AUTH_PASSWORD, AUTH_SECRET,
-    DB_PATH, HOST, PORT,
+    CHAT_DB_PATH, DB_PATH, HOST, PORT,
 )
+from dbagent.chat_store import ChatStore
 
 app = FastAPI(title="DBAgent", version="0.1.0")
 
@@ -25,22 +24,10 @@ FRONTEND_DIR = Path(__file__).parent / "frontend"
 
 
 # ------------------------------------------------------------------
-# In-memory stores (replace with DB-backed storage later)
+# Chat persistence
 # ------------------------------------------------------------------
 
-_chats: dict[str, dict[str, Any]] = {}  # chat_id -> {title, created_at, messages}
-
-
-def _get_or_create_chat(chat_id: str | None) -> tuple[str, dict[str, Any]]:
-    if chat_id and chat_id in _chats:
-        return chat_id, _chats[chat_id]
-    new_id = uuid.uuid4().hex[:12]
-    _chats[new_id] = {
-        "title": "New chat",
-        "created_at": datetime.utcnow().isoformat(),
-        "messages": [],
-    }
-    return new_id, _chats[new_id]
+_store = ChatStore(CHAT_DB_PATH)
 
 
 # ------------------------------------------------------------------
@@ -115,22 +102,15 @@ async def login(req: LoginRequest) -> JSONResponse:
 
 @app.get("/api/chats")
 async def list_chats(username: str = Depends(_require_auth)) -> JSONResponse:
-    result = []
-    for cid, chat in sorted(_chats.items(), key=lambda x: x[1]["created_at"], reverse=True):
-        result.append({
-            "id": cid,
-            "title": chat["title"],
-            "created_at": chat["created_at"],
-            "message_count": len(chat["messages"]),
-        })
-    return JSONResponse(result)
+    return JSONResponse(_store.list_chats())
 
 
 @app.get("/api/chats/{chat_id}")
 async def get_chat(chat_id: str, username: str = Depends(_require_auth)) -> JSONResponse:
-    if chat_id not in _chats:
+    chat = _store.get_chat(chat_id)
+    if chat is None:
         raise HTTPException(status_code=404, detail="Chat not found")
-    return JSONResponse({"id": chat_id, **_chats[chat_id]})
+    return JSONResponse(chat)
 
 
 # ------------------------------------------------------------------
@@ -139,24 +119,17 @@ async def get_chat(chat_id: str, username: str = Depends(_require_auth)) -> JSON
 
 @app.post("/api/query", response_model=QueryResponse)
 async def query(req: QueryRequest, username: str = Depends(_require_auth)) -> QueryResponse:
-    chat_id, chat = _get_or_create_chat(req.chat_id)
+    if req.chat_id and _store.chat_exists(req.chat_id):
+        chat_id = req.chat_id
+    else:
+        chat_id = _store.create_chat(title=req.question[:50])
 
-    chat["messages"].append({
-        "role": "user",
-        "content": req.question,
-        "timestamp": datetime.utcnow().isoformat(),
-    })
-
-    if chat["title"] == "New chat":
-        chat["title"] = req.question[:50]
+    now = datetime.utcnow().isoformat()
+    _store.add_message(chat_id, "user", req.question, now)
 
     answer = "noted"
 
-    chat["messages"].append({
-        "role": "agent",
-        "content": answer,
-        "timestamp": datetime.utcnow().isoformat(),
-    })
+    _store.add_message(chat_id, "agent", answer)
 
     return QueryResponse(answer=answer, chat_id=chat_id)
 
@@ -193,23 +166,17 @@ async def ws_query(ws: WebSocket) -> None:
             question = data.get("question", "")
             chat_id_in = data.get("chat_id")
 
-            chat_id, chat = _get_or_create_chat(chat_id_in)
+            if chat_id_in and _store.chat_exists(chat_id_in):
+                chat_id = chat_id_in
+            else:
+                chat_id = _store.create_chat(title=question[:50])
 
-            chat["messages"].append({
-                "role": "user",
-                "content": question,
-                "timestamp": datetime.utcnow().isoformat(),
-            })
-            if chat["title"] == "New chat":
-                chat["title"] = question[:50]
+            now = datetime.utcnow().isoformat()
+            _store.add_message(chat_id, "user", question, now)
 
             answer = "noted"
 
-            chat["messages"].append({
-                "role": "agent",
-                "content": answer,
-                "timestamp": datetime.utcnow().isoformat(),
-            })
+            _store.add_message(chat_id, "agent", answer)
 
             await ws.send_json({
                 "step": "done",
@@ -218,6 +185,15 @@ async def ws_query(ws: WebSocket) -> None:
             })
     except WebSocketDisconnect:
         pass
+
+
+# ------------------------------------------------------------------
+# Lifecycle
+# ------------------------------------------------------------------
+
+@app.on_event("shutdown")
+async def shutdown() -> None:
+    _store.close()
 
 
 # ------------------------------------------------------------------

@@ -14,6 +14,7 @@ LLM_MODEL: str = os.getenv("LLM_MODEL", "gpt-4")
 LLM_BASE_URL: str = os.getenv("LLM_BASE_URL", "https://api.openai.com/v1")
 
 DB_PATH: str = os.getenv("DB_PATH", "database.db")
+CHAT_DB_PATH: str = os.getenv("CHAT_DB_PATH", "chats.db")
 
 MAX_RETRIES: int = int(os.getenv("MAX_RETRIES", "3"))
 RETRY_DELAY_SECONDS: float = float(os.getenv("RETRY_DELAY_SECONDS", "1.0"))
