@@ -1,5 +1,13 @@
 import os
+from pathlib import Path
 
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+AUTH_USERNAME: str = os.getenv("AUTH_USERNAME", "admin")
+AUTH_PASSWORD: str = os.getenv("AUTH_PASSWORD", "admin")
+AUTH_SECRET: str = os.getenv("AUTH_SECRET", "change-me-in-production")
 
 LLM_API_KEY: str = os.getenv("LLM_API_KEY", "")
 LLM_MODEL: str = os.getenv("LLM_MODEL", "gpt-4")
