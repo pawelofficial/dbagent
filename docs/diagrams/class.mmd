@@ -1,90 +1,91 @@
 classDiagram
-    class Waiter {
-        +String name
-        -Order _current_order
-        +greets(client: Client)
-        +receive_order(order: Order)
-        -check_availability(item: Item, inventory: Inventory) bool
-        +check_and_add(item: Item, order: Order, inventory: Inventory) bool
-        +confirm(client: Client)
-        +give_check(client: Client, check: Check)
-        +prepare_check(order: Order, menu: Menu, db: Database) Check
+    direction TB
+
+    class DB {
+        -str db_path
+        -Connection connection
+        +connect() Connection
+        +get_schema() dict
+        +get_table_info(table_name: str) dict
+        +execute(query: str) list
+        +close() void
     }
 
-    class Client {
-        +String name
-        +greets(waiter: Waiter)
-        +orders_item(item: Item) Item
-        +place_order(order: Order, waiter: Waiter)
-        +ask_for_check(waiter: Waiter)
+    class AbstractAgent {
+        <<abstract>>
+        #str model
+        #int max_retries
+        +process(user_input: str)* dict
     }
 
-    class Order {
-        +List~Item~ items
-        +add_item(item: Item)
+    class DBAgent {
+        -DB db
+        -DocsSkill docs_skill
+        -SQLSkill sql_skill
+        -DataSkill data_skill
+        -list conversation_history
+        +process(user_input: str) dict
+        -_call_llm(prompt: str, context: str) str
+        -_retry_loop(question: str, context: str, error: str) dict
     }
 
-    class Check {
-        +List~Item~ items
-        +float total
-        +calculate_amount(menu: Menu) float
-        +save(db: Database)
+    class AbstractSkill {
+        <<abstract>>
+        +execute(input: dict)* dict
     }
 
-    class Item {
-        +String name
-        +bool availability
-        +float price
+    class DocsSkill {
+        -DB db
+        +execute(input: dict) dict
+        +get_relevant_docs(question: str) str
+        -_get_schema_context() str
+        -_get_table_descriptions() dict
     }
 
-    class Inventory {
-        +List~Item~ items
-        +check_availability(item: Item) bool
+    class SQLSkill {
+        +execute(input: dict) dict
+        +validate(sql: str) bool
+        +parse(sql: str) dict
+        -_is_read_only(sql: str) bool
+        -_sanitize(sql: str) str
     }
 
-    class Menu {
-        +Dict prices
-        +get_price(item: Item) float
+    class DataSkill {
+        -DB db
+        +execute(input: dict) dict
+        +run_query(sql: str) dict
+        -_format_results(rows: list, columns: list) dict
+        -_handle_error(error: Exception) dict
     }
 
-    class Database {
-        +String connection_string
-        -Connection _conn
-        +connect()
-        +query(sql: str, params: tuple) List
-        +execute(sql: str, params: tuple)
-        +seed()
+    class FastAPIApp {
+        -DBAgent agent
+        +POST /api/query(question: str) dict
+        +WS /ws/query() void
+        +GET /api/schema() dict
     }
 
-    class MenuRepository {
-        -db: Database
-        +load_menu() Menu
+    class Frontend {
+        -WebSocket ws
+        +renderChat() void
+        +renderSQL(sql: str) void
+        +renderTable(data: dict) void
+        +renderDocs(docs: list) void
+        +showStatus(step: str) void
     }
 
-    class InventoryRepository {
-        -db: Database
-        +load_inventory() Inventory
-    }
+    AbstractAgent <|-- DBAgent
+    AbstractSkill <|-- DocsSkill
+    AbstractSkill <|-- SQLSkill
+    AbstractSkill <|-- DataSkill
 
-    %% Aggregation - holds a collection as a field
-    Order o-- Item : contains
-    Inventory o-- Item : stocks
-    Check o-- Item : lists
+    DBAgent *-- DocsSkill : uses
+    DBAgent *-- SQLSkill : uses
+    DBAgent *-- DataSkill : uses
 
-    %% Association - uses in method params, doesn't hold
-    Waiter --> Client : serves
-    Client --> Order : places
-    Waiter --> Order : receives
-    Waiter --> Inventory : checks stock
-    Waiter --> Check : requests
-    Menu --> Item : looks up price
+    DocsSkill o-- DB : reads schema
+    DataSkill o-- DB : executes queries
+    DBAgent o-- DB : owns
 
-    %% Composition - owns as a field, tightly coupled
-    MenuRepository *-- Database : has db
-    InventoryRepository *-- Database : has db
-
-    %% Dependencies - only used as return types in methods
-    MenuRepository ..> Menu : produces
-    InventoryRepository ..> Inventory : produces
-    Check ..> Menu : uses for pricing
-    Check ..> Database : saves to
+    FastAPIApp *-- DBAgent : orchestrates
+    Frontend ..> FastAPIApp : WebSocket / REST

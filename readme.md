@@ -1,13 +1,18 @@
-Classes and objects — what is a class vs an instance
-Encapsulation — what should be private vs public (that's where + and - come from in classDiagram)
-Inheritance — when does a class extend another (Waiter extends Employee)
-Polymorphism — when different classes share the same method but behave differently
-Composition vs Aggregation — does Waiter own a Menu, or just use it? (the arrows in classDiagram mean different things)
-Interfaces / Abstract classes — defining contracts between classes
-
-Dependency ..> — uses temporarily
-Association --> — has a reference
-Aggregation o-- — has a, but can exist independently (like a Team has Players, but Players can exist without the Team)
-Composition *-- — owns it, can't exist without parent
-Inheritance <|-- — extends
-Realization <|.. — implements an interface
+dbagent/
+├── __init__.py
+├── config.py                  # env-based settings (LLM key, DB path, retries, server)
+├── db.py                      # DB class – SQLite connect/schema/execute/close
+├── main.py                    # FastAPI app – REST + WebSocket + static serving
+├── agents/
+│   ├── __init__.py
+│   ├── base.py                # AbstractAgent (abstract process())
+│   └── db_agent.py            # DBAgent – orchestrates skills, calls LLM, retry loop
+├── skills/
+│   ├── __init__.py
+│   ├── base.py                # AbstractSkill (abstract execute())
+│   ├── docs_skill.py          # DocsSkill – schema context & table descriptions
+│   ├── sql_skill.py           # SQLSkill – validate, parse, sanitize, read-only check
+│   └── data_skill.py          # DataSkill – run query, format results, handle errors
+├── frontend/
+│   └── index.html             # Dark-themed chat UI with WebSocket support
+requirements.txt               # fastapi, uvicorn, pydantic
